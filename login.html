@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login • CodeLens AI</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="bg-soft">
+    <main class="container fullscreen">
+      <section class="card">
+        <div class="brand" style="justify-content:center">
+          <img src="logo.svg" alt="CodeLens AI" class="logo" style="width:56px;height:56px">
+          <div class="brand-text" style="align-items:center">
+            <span class="auth-title">Sign in or create an account to personalize your workspace</span>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:16px">
+          <label class="input-field" for="name">
+            Name
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/></svg>
+            </span>
+            <input id="name" type="text" placeholder="e.g., Alex Gupta" aria-invalid="false">
+            <span id="name-err" class="error-text"></span>
+          </label>
+          <label class="input-field" for="email">
+            Email
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v1l10 6 10-6V6a2 2 0 0 0-2-2Zm0 6.25-8 4.8-8-4.8V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"/></svg>
+            </span>
+            <input id="email" type="email" placeholder="you@example.com" aria-invalid="false">
+            <span id="email-err" class="error-text"></span>
+          </label>
+        </div>
+        <div style="display:grid; gap:12px; margin-top:12px">
+          <label class="input-field" for="password">
+            Password
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M17 8V7a5 5 0 0 0-10 0v1H5v13h14V8Zm-8-1a3 3 0 0 1 6 0v1H9Zm7 11H8v-8h8Z"/></svg>
+            </span>
+            <input id="password" type="password" placeholder="Enter password" aria-invalid="false">
+            <span id="password-err" class="error-text"></span>
+          </label>
+        </div>
+        <div class="btn-row" style="margin-top:16px; justify-content:center">
+          <button id="btn-switch" class="btn-outline">Switch to Sign In</button>
+          <button id="btn-primary" class="btn-gradient">Create Account</button>
+          <button id="btn-guest" class="btn-ghost">Continue as Guest</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; justify-content:center; margin-top:8px">
+          <button id="btn-github" class="btn-github">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.68c-2.78.6-3.37-1.2-3.37-1.2-.46-1.17-1.13-1.49-1.13-1.49-.92-.63.07-.62.07-.62 1.02.07 1.56 1.05 1.56 1.05 .9 1.54 2.36 1.1 2.94.84 .09-.65 .35-1.1 .64-1.35 -2.22-.25-4.56-1.11-4.56-4.93 0-1.09 .39-1.99 1.03-2.69 -.1-.25 -.45-1.27 .1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.9-1.29 2.74-1.02 2.74-1.02 .55 1.38 .2 2.4 .1 2.65 .64 .7 1.03 1.6 1.03 2.69 0 3.83 -2.34 4.67 -4.57 4.92 .36 .31 .68 .93 .68 1.88v2.78c0 .26 .18 .58 .69 .48A10 10 0 0 0 12 2Z"/></svg>
+            Continue with GitHub
+          </button>
+        </div>
+        <div id="login-msg" class="output" style="font-size:13px; color:#64748b; margin-top:8px"></div>
+      </section>
+    </main>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="login.js"></script>
+  </body>
+  </html>

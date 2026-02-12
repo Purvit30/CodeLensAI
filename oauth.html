@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GitHub OAuth • CodeLens AI</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="container" style="max-width:520px">
+      <section class="card">
+        <div class="brand" style="justify-content:center">
+          <img src="logo.svg" alt="CodeLens AI" class="logo" style="width:48px;height:48px">
+          <div class="brand-text" style="align-items:center">
+            <span class="title">Completing GitHub Login</span>
+            <span class="tagline">Please wait...</span>
+          </div>
+        </div>
+        <div id="status" class="output" style="margin-top:12px; font-size:13px"></div>
+      </section>
+    </main>
+    <script src="auth.js"></script>
+    <script>
+      const p = new URLSearchParams(window.location.search)
+      const code = p.get("code")
+      if (!code) {
+        document.getElementById("status").textContent = "Missing authorization code."
+      } else {
+        CodeLensAuth.setUser({ email:"github", provider:"github", oauthCode:code, createdAt: Date.now() })
+        window.location.href = "index.html"
+      }
+    </script>
+  </body>
+  </html>

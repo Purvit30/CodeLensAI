@@ -1,0 +1,148 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CodeLens AI</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+    <script> CodeLensAuth.requireAuth() </script>
+    <script src="https://cdn.jsdelivr.net/npm/typescript@5.3.3/lib/typescript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <script src="https://cdn.opalrb.com/opal/current/opal.js"></script>
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">
+        <button id="menu-btn" class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+        <img src="logo.svg" alt="CodeLens AI" class="logo">
+        <div class="brand-text">
+          <span class="title">CodeLens AI</span>
+          <span class="tagline">Understand & explain code clearly</span>
+        </div>
+      </div>
+      <div class="modes"><span id="user-badge" class="switch"></span></div>
+    </header>
+    <div id="drawer" class="drawer-overlay" aria-hidden="true">
+      <div class="drawer">
+        <div class="drawer-head">
+          <span>Menu</span>
+          <button id="drawer-close">Close</button>
+        </div>
+        <div class="drawer-body">
+          <label class="switch"><input type="checkbox" id="mode-advanced"><span>Advanced Mode</span></label>
+          <label class="switch"><input type="checkbox" id="mode-eli10"><span>Explain like I’m 10</span></label>
+          <button id="btn-logout" class="danger">Logout</button>
+          <button id="btn-report">Report an Issue</button>
+        </div>
+      </div>
+    </div>
+    <main class="container">
+      <section class="card">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <select id="lang-select" class="compact-select">
+              <option value="">Auto-detect</option>
+              <option>Python</option>
+              <option>JavaScript</option>
+              <option>TypeScript</option>
+              <option>Java</option>
+              <option>C</option>
+              <option>C++</option>
+              <option>Go</option>
+              <option>Ruby</option>
+              <option>PHP</option>
+            </select>
+            <label class="switch"><input type="checkbox" id="editor-dark"><span>Dark Editor</span></label>
+          </div>
+          <div class="toolbar-right">
+            <button id="btn-run" class="btn-gradient">Run Code</button>
+            <button id="btn-explain" class="btn-outline">Explain Code</button>
+            <button id="btn-flow" class="btn-outline">Show Flowchart</button>
+            <button id="btn-optimize" class="btn-outline">Suggest Optimizations</button>
+            <button id="btn-clear" class="danger">Clear</button>
+          </div>
+        </div>
+        <div class="editor" id="editor">
+          <div class="editor-gutter" id="editor-gutter"></div>
+          <textarea id="code-input" rows="14" class="editor-input" placeholder="Paste code here"></textarea>
+        </div>
+      </section>
+      <section class="card">
+        <button id="terminal-toggle" class="btn-outline" aria-expanded="true" style="width:100%; margin-bottom:8px">Hide Output</button>
+        <div id="tabs" class="tabs" role="tablist" aria-label="Runtime Tabs">
+          <button id="tab-output" class="tab active" role="tab" aria-selected="true" aria-controls="runtime-output">Output</button>
+          <button id="tab-errors" class="tab" role="tab" aria-selected="false" aria-controls="runtime-output">Errors</button>
+          <button id="tab-logs" class="tab" role="tab" aria-selected="false" aria-controls="runtime-output">Logs</button>
+        </div>
+        <div id="runtime-output" class="terminal"></div>
+      </section>
+      <section class="card">
+        <div id="output" class="output"></div>
+      </section>
+    </main>
+    <footer class="footer">
+      <span>CodeLens AI • Multiple language support • Error detection • Complexity</span>
+    </footer>
+    <div id="report-modal" class="modal-overlay" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-head">
+          <span>Report an Issue</span>
+          <button id="report-close">Close</button>
+        </div>
+        <div class="modal-body">
+          <label>
+            Describe the issue
+            <textarea id="report-text" rows="6" placeholder="What went wrong?"></textarea>
+          </label>
+          <div class="row">
+            <button id="report-submit" class="primary">Submit</button>
+          </div>
+          <div id="report-msg" class="output" style="margin-top:8px; font-size:13px"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const u = CodeLensAuth.getUser()
+      const b = document.getElementById("user-badge")
+      if (u) { 
+        const label = u.provider==="github"?"GitHub":u.provider==="email"?"Email":u.provider==="guest"?"Guest":"User"
+        const idText = u.name || u.email || ""
+        b.textContent = label+" • "+idText 
+      }
+      const menuBtn = document.getElementById("menu-btn")
+      const drawer = document.getElementById("drawer")
+      const drawerClose = document.getElementById("drawer-close")
+      menuBtn.addEventListener("click", ()=> { drawer.classList.add("open") })
+      drawerClose.addEventListener("click", ()=> { drawer.classList.remove("open") })
+      document.getElementById("btn-logout").addEventListener("click", ()=> { CodeLensAuth.logout() })
+      const reportBtn = document.getElementById("btn-report")
+      const reportModal = document.getElementById("report-modal")
+      const reportClose = document.getElementById("report-close")
+      const reportSubmit = document.getElementById("report-submit")
+      const reportText = document.getElementById("report-text")
+      const reportMsg = document.getElementById("report-msg")
+      reportBtn.addEventListener("click", ()=> { reportModal.classList.add("open"); drawer.classList.remove("open") })
+      reportClose.addEventListener("click", ()=> { reportModal.classList.remove("open") })
+      function saveReport(text){
+        try {
+          const k = "codelens.reports"
+          const arr = JSON.parse(localStorage.getItem(k)||"[]")
+          arr.push({ text, user: CodeLensAuth.getUser(), ts: Date.now() })
+          localStorage.setItem(k, JSON.stringify(arr))
+          return true
+        } catch { return false }
+      }
+      reportSubmit.addEventListener("click", ()=>{
+        const t = (reportText.value||"").trim()
+        if (!t) { reportMsg.textContent = "Enter a brief description."; return }
+        const ok = saveReport(t)
+        reportMsg.textContent = ok ? "Thanks. Issue reported." : "Failed to save the report."
+        if (ok) { reportText.value = "" }
+      })
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>
