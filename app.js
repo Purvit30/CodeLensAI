@@ -1,6 +1,7 @@
 const input = document.getElementById("code-input")
 const output = document.getElementById("output")
 const btnExplain = document.getElementById("btn-explain")
+const btnRun = document.getElementById("btn-run")
 const btnErrors = document.getElementById("btn-errors")
 const runtimeOutput = document.getElementById("runtime-output")
 const btnFlow = document.getElementById("btn-flow")
@@ -17,6 +18,9 @@ const tabErrors = document.getElementById("tab-errors")
 const tabLogs = document.getElementById("tab-logs")
 let runtimeActiveTab = "output"
 const runtimeData = { output: [], errors: [], logs: [] }
+const terminalToggle = document.getElementById("terminal-toggle")
+const tabsEl = document.getElementById("tabs")
+let terminalCollapsed = false
 
 function detectLanguage(code, override) {
   if (override) return override
@@ -272,11 +276,12 @@ function runExplain(showFlowOnly, optimizeOnly) {
   output.textContent = text
 }
 
-btnExplain.addEventListener("click", ()=> runExplain(false,false))
-btnErrors.addEventListener("click", showErrors)
-btnFlow.addEventListener("click", ()=> runExplain(true,false))
-btnOptimize.addEventListener("click", ()=> runExplain(false,true))
-btnClear.addEventListener("click", ()=> { input.value=""; output.textContent="" })
+btnExplain && btnExplain.addEventListener("click", ()=> runExplain(false,false))
+btnErrors && btnErrors.addEventListener("click", showErrors)
+btnFlow && btnFlow.addEventListener("click", ()=> runExplain(true,false))
+btnOptimize && btnOptimize.addEventListener("click", ()=> runExplain(false,true))
+btnClear && btnClear.addEventListener("click", ()=> { input.value=""; output.textContent="" })
+btnRun && btnRun.addEventListener("click", runCode)
 
 function updateRuntimeView(){
   const data = runtimeData[runtimeActiveTab]
@@ -303,6 +308,42 @@ updateLineNumbers()
 editorDark.addEventListener("change", ()=> {
   editor.classList.toggle("dark", editorDark.checked)
 })
+
+function startRunLoading(){
+  btnRun.classList.add("btn-loading")
+  btnRun.innerHTML = '<span class="spinner"></span>Run Code'
+}
+function stopRunLoading(){
+  btnRun.classList.remove("btn-loading")
+  btnRun.textContent = "Run Code"
+}
+
+function runCode(){
+  const code = input.value
+  const override = langSelect.value||""
+  const lang = detectLanguage(code, override)
+  if (!code.trim()){
+    runtimeData.output = ["Paste code to run."]
+    runtimeActiveTab = "output"
+    updateRuntimeView()
+    return
+  }
+  startRunLoading()
+  if (lang === "JavaScript") {
+    runInSandboxJS(code)
+  } else if (lang === "TypeScript") {
+    runInTypeScript(code)
+  } else if (lang === "Python") {
+    runInPython(code)
+  } else if (lang === "Ruby") {
+    runInRuby(code)
+  } else {
+    runtimeData.errors = ["Runner is not available for "+lang+" yet."]
+    runtimeActiveTab = "errors"
+    updateRuntimeView()
+  }
+  stopRunLoading()
+}
 
 
 
@@ -388,3 +429,11 @@ runtimeOutput.addEventListener("touchend", function(e){
     updateRuntimeView()
   }
 }, { passive: true })
+
+terminalToggle.addEventListener("click", function(){
+  terminalCollapsed = !terminalCollapsed
+  terminalToggle.textContent = terminalCollapsed ? "Show Output" : "Hide Output"
+  terminalToggle.setAttribute("aria-expanded", String(!terminalCollapsed))
+  tabsEl.style.display = terminalCollapsed ? "none" : ""
+  runtimeOutput.style.display = terminalCollapsed ? "none" : ""
+})

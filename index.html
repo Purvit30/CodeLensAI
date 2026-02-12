@@ -41,6 +41,7 @@
     </div>
     <main class="container">
       <section class="card">
+        <div class="section-title">Editor</div>
         <div class="toolbar">
           <div class="toolbar-left">
             <select id="lang-select" class="compact-select">
@@ -58,7 +59,7 @@
             <label class="switch"><input type="checkbox" id="editor-dark"><span>Dark Editor</span></label>
           </div>
           <div class="toolbar-right">
-            <button id="btn-run" class="btn-gradient">Run Code</button>
+            <button id="btn-errors" class="btn-gradient">Check Errors</button>
             <button id="btn-explain" class="btn-outline">Explain Code</button>
             <button id="btn-flow" class="btn-outline">Show Flowchart</button>
             <button id="btn-optimize" class="btn-outline">Suggest Optimizations</button>
@@ -71,6 +72,7 @@
         </div>
       </section>
       <section class="card">
+        <div class="section-title">Runtime</div>
         <button id="terminal-toggle" class="btn-outline" aria-expanded="true" style="width:100%; margin-bottom:8px">Hide Output</button>
         <div id="tabs" class="tabs" role="tablist" aria-label="Runtime Tabs">
           <button id="tab-output" class="tab active" role="tab" aria-selected="true" aria-controls="runtime-output">Output</button>
@@ -80,6 +82,7 @@
         <div id="runtime-output" class="terminal"></div>
       </section>
       <section class="card">
+        <div class="section-title">Analysis</div>
         <div id="output" class="output"></div>
       </section>
     </main>
