@@ -1,3 +1,5 @@
 window.CodeLensConfig = {
-  githubClientId: ""
+  githubClientId: "",
+  adminEmail: "",
+  adminPasswordHash: ""
 }

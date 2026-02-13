@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin • CodeLens AI</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">
+        <img src="logo.svg" alt="CodeLens AI" class="logo">
+        <div class="brand-text">
+          <span class="title">Admin Panel</span>
+          <span class="tagline">Manage users, reports, and settings</span>
+        </div>
+      </div>
+      <div class="modes"><span id="admin-badge" class="switch">Admin</span></div>
+    </header>
+    <main class="container" style="display:grid; grid-template-columns: 220px 1fr; gap:12px">
+      <aside class="admin-sidebar card" style="padding:0">
+        <nav class="admin-nav">
+          <button class="admin-nav-item active" data-view="overview">Dashboard Overview</button>
+          <button class="admin-nav-item" data-view="users">User Management</button>
+          <button class="admin-nav-item" data-view="reports">Reported Issues</button>
+          <button class="admin-nav-item" data-view="settings">Settings</button>
+        </nav>
+      </aside>
+      <section class="card">
+        <div id="view-overview" class="admin-view">
+          <div class="section-title">Overview</div>
+          <div class="admin-stats row">
+            <div class="stat-card">
+              <div class="stat-title">Total Users</div>
+              <div id="stat-users" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Reports</div>
+              <div id="stat-reports" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Blocked</div>
+              <div id="stat-blocked" class="stat-value">0</div>
+            </div>
+          </div>
+        </div>
+        <div id="view-users" class="admin-view" hidden>
+          <div class="section-title">Users</div>
+          <div class="admin-table">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="users-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="view-reports" class="admin-view" hidden>
+          <div class="section-title">Reported Issues</div>
+          <div class="admin-table">
+            <table>
+              <thead>
+                <tr><th>User</th><th>Summary</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="reports-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="view-settings" class="admin-view" hidden>
+          <div class="section-title">Settings</div>
+          <div style="display:grid; gap:12px">
+            <div class="row">
+              <button id="btn-export" class="btn-outline">Export data</button>
+              <button id="btn-clear-audit" class="btn-outline">Clear audit logs</button>
+              <button id="btn-logout-admin" class="danger">Logout admin</button>
+            </div>
+            <div class="section-title">Audit Log</div>
+            <div id="audit-log" class="terminal" style="min-height:140px"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <span>CodeLens AI • Admin</span>
+    </footer>
+    <script src="auth.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

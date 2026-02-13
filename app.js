@@ -39,16 +39,19 @@ function detectLanguage(code, override) {
 
 function summarize(code, lang) {
   const lines = code.trim().split(/\r?\n/)
-  if (!lines.length || !code.trim()) return "The input is empty. Please paste valid code."
-  const hasFunc = /def\s+|function\s+|func\s+|public\s+static\s+void\s+main|int\s+main/.test(code)
-  const hasLoop = /\bfor\b|\bwhile\b/.test(code)
-  const hasCond = /\bif\b|\bswitch\b/.test(code)
+  if (!lines.length || !code.trim()) return "No code provided."
+  const headline = lines[0].trim()
+  const total = lines.length
+  const hasFunc = /def\s+|function\s+|=>\s*|func\s+|public\s+static\s+void\s+main|class\s+\w+/.test(code)
+  const hasLoop = /\bfor\b|\bwhile\b|\bforeach\b|\brange\b/.test(code)
+  const hasCond = /\bif\b|\bswitch\b|\belif\b|\belse if\b/.test(code)
   const parts = []
-  parts.push(`Analyses ${lang} code and explains its structure.`)
-  if (hasFunc) parts.push("Identifies functions and their roles.")
-  if (hasLoop) parts.push("Describes loops and iterations.")
-  if (hasCond) parts.push("Explains conditions and decision-making.")
-  return parts.slice(0,2).join(" ")
+  parts.push(`Analyses ${lang} code (${total} lines) and focuses on its actual structure.`)
+  if (headline) parts.push(`Starts with: "${headline.slice(0,80)}${headline.length>80?"…":""}"`)
+  if (hasFunc) parts.push("Detects defined functions/classes and how they interact.")
+  if (hasLoop) parts.push("Identifies loop constructs and their traversal patterns.")
+  if (hasCond) parts.push("Explains conditional branches and decision logic.")
+  return parts.join(" ")
 }
 
 function splitLines(code) {
@@ -64,15 +67,15 @@ function extractEntities(code) {
   lines.forEach(l=>{
     const s = l.t
     let m
-    m = s.match(/\b(\w+)\s*=\s*[^=]/)
-    if (m) vars.push({name:m[1], line:l.i})
-    m = s.match(/\b(for|while)\b\s*\(?.*?\)?/)
+    m = s.match(/\b(const|let|var)\s+(\w+)\s*=|^\s*(\w+)\s*=\s*[^=]/)
+    if (m) vars.push({name:m[2]||m[3], line:l.i})
+    m = s.match(/\b(for|while|foreach)\b\s*\(?.*?\)?/)
     if (m) loops.push({type:m[1], line:l.i, text:s.trim()})
     m = s.match(/\b(if|else if|elif|switch)\b/)
     if (m) conds.push({type:m[1], line:l.i, text:s.trim()})
-    m = s.match(/\bdef\s+(\w+)\s*\(|\bfunction\s+(\w+)\s*\(|\bfunc\s+(\w+)\s*\(|\bclass\s+(\w+)/)
+    m = s.match(/\bdef\s+(\w+)\s*\(|\bfunction\s+(\w+)\s*\(|\bfunc\s+(\w+)\s*\(|\bclass\s+(\w+)|\b(\w+)\s*=\s*\(.*?\)\s*=>/)
     if (m) {
-      const name = m[1]||m[2]||m[3]||m[4]
+      const name = m[1]||m[2]||m[3]||m[4]||m[5]
       funcs.push({name, line:l.i})
     }
   })
@@ -81,15 +84,14 @@ function extractEntities(code) {
 
 function buildStepByStep(code, entities, eli10) {
   const steps = []
-  steps.push("1) Read the code from top to bottom.")
-  if (entities.vars.length) steps.push(`2) It defines variables: ${entities.vars.map(v=>v.name).slice(0,6).join(", ")}.`)
-  if (entities.funcs.length) steps.push(`3) It declares functions/classes: ${entities.funcs.map(f=>f.name).slice(0,6).join(", ")}.`)
-  if (entities.loops.length) steps.push(`4) It uses loops to repeat work: ${entities.loops.map(l=>l.type).join(", ")}.`)
-  if (entities.conds.length) steps.push(`5) It makes decisions using ${entities.conds.map(c=>c.type).join(", ")}.`)
-  steps.push("6) Finally, it produces output or returns a result.")
-  if (eli10) {
-    return steps.map(s=>s.replace("It","Think of it like a recipe that")).join("\n")
-  }
+  const add = (n, text) => steps.push(`${n}) ${text}`)
+  add(1, "Scan inputs, imports, and initial declarations.")
+  if (entities.vars.length) add(2, `Initialize variables: ${entities.vars.map(v=>`${v.name}@${v.line}`).slice(0,8).join(", ")}.`)
+  if (entities.funcs.length) add(3, `Define functions/classes: ${entities.funcs.map(f=>`${f.name}@${f.line}`).slice(0,8).join(", ")}.`)
+  if (entities.conds.length) add(4, `Branch logic with ${entities.conds.map(c=>c.type).join(", ")} at lines ${entities.conds.map(c=>c.line).join(", ")}.`)
+  if (entities.loops.length) add(5, `Iterate using ${entities.loops.map(l=>l.type).join(", ")} at lines ${entities.loops.map(l=>l.line).join(", ")}.`)
+  add(6, "Aggregate/return results and side-effects.")
+  if (eli10) return steps.map(s=> s.replace(/^\d+\)\s*/, "") ).map(s=> "• "+s).join("\n")
   return steps.join("\n")
 }
 
@@ -172,15 +174,15 @@ function formatOutput(lang, summary, stepByStep, concepts, improvements, comp, f
   sections.push("KEY CONCEPTS:\n"+concepts+"\n")
   const impLines = []
   if (improvements.issues.length) impLines.push("Issues: "+improvements.issues.join("; "))
-  impLines.push("Possible Improvements: "+improvements.tips.join("; "))
+  impLines.push("Optimization Suggestions: "+improvements.tips.join("; "))
   impLines.push("Time Complexity: "+comp)
   const ex = exampleIO(lang)
   impLines.push("Example Input/Output: input="+ex.input+" → output="+ex.output)
-  impLines.push("Beginner Difficulty: "+difficulty(entities))
-  sections.push("POSSIBLE IMPROVEMENTS:\n"+impLines.join("\n")+"\n")
+  impLines.push("Estimated Difficulty: "+difficulty(entities))
+  sections.push("OPTIMIZATION & ANALYSIS:\n"+impLines.join("\n")+"\n")
   sections.push("VISUAL FLOW:\n"+flow+"\n")
-  if (eli10) sections.push("EXPLAIN LIKE I’M 10:\nThis code is like following steps in a simple recipe to get a result.\n")
-  if (advanced) sections.push("ADVANCED MODE:\nIncludes structure, complexity and optimization insights.\n")
+  if (eli10) sections.push("BEGINNER MODE:\nFocuses on simple, high-level explanations.\n")
+  if (advanced) sections.push("TECHNICAL MODE:\nIncludes structure, complexity and code-specific insights.\n")
   return sections.join("\n")
 }
 
@@ -256,6 +258,8 @@ function runExplain(showFlowOnly, optimizeOnly) {
     output.textContent = "Please paste valid code."
     return
   }
+  btnExplain.classList.add("btn-loading")
+  btnExplain.innerHTML = '<span class="spinner"></span>Explain Code'
   const entities = extractEntities(code)
   const summaryText = summarize(code, lang)
   const step = buildStepByStep(code, entities, modeEli10.checked)
@@ -265,15 +269,21 @@ function runExplain(showFlowOnly, optimizeOnly) {
   const flow = visualFlow(entities)
   if (showFlowOnly) {
     output.textContent = "VISUAL FLOW:\n"+flow
+    btnExplain.classList.remove("btn-loading")
+    btnExplain.innerHTML = 'Explain Code'
     return
   }
   if (optimizeOnly) {
     const tips = improvements.tips.join("\n")
     output.textContent = "OPTIMIZE CODE SUGGESTIONS:\n"+tips
+    btnExplain.classList.remove("btn-loading")
+    btnExplain.innerHTML = 'Explain Code'
     return
   }
   const text = formatOutput(lang, summaryText, step, concepts, improvements, comp, flow, modeEli10.checked, modeAdvanced.checked, entities)
   output.textContent = text
+  btnExplain.classList.remove("btn-loading")
+  btnExplain.innerHTML = 'Explain Code'
 }
 
 btnExplain && btnExplain.addEventListener("click", ()=> runExplain(false,false))
