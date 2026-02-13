@@ -43,7 +43,7 @@ button.danger { border-color: var(--danger); color: var(--danger); }
 .btn-outline:hover { border-color:#94a3b8; }
 .btn-ghost { background:transparent; border:1px solid transparent; color:#4b5563; }
 .btn-ghost:hover { border-color:#e2e8f0; background:#f8fafc; }
-.btn-github { background:#101214; color:#fff; border:1px solid #0b0d0f; display:flex; align-items:center; gap:8px; }
+.btn-github { background:#101214; color:#fff; border:1px solid #0b0d0f; display:flex; align-items:center; justify-content:center; gap:8px; }
 .btn-github:hover { background:#16181d; }
 .btn-loading { pointer-events:none; opacity: .85; }
 .spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.5); border-top-color:#fff; border-radius:50%; animation: spin .8s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
