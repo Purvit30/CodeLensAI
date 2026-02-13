@@ -17,6 +17,7 @@ function validEmail(e){
   const r = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return r.test((e||"").trim())
 }
+function normalize(s){ return (s||"").trim().toLowerCase() }
 
 async function hashPassword(p){
   const enc = new TextEncoder().encode(p||"")
@@ -31,23 +32,25 @@ adminLoginBtn.addEventListener("click", async ()=>{
   const e = (adminEmailInput.value||"").trim()
   const p = adminPassInput.value||""
   let hasErr = false
-  if(!validEmail(e)){ setErr(adminEmailInput, adminEmailErr, "Enter a valid admin email."); hasErr = true }
+  if(!e){ setErr(adminEmailInput, adminEmailErr, "Enter admin email or name."); hasErr = true }
   if(!p){ setErr(adminPassInput, adminPassErr, "Enter the admin password."); hasErr = true }
   if (hasErr) return
   const cfg = window.CodeLensConfig || {}
-  const adminEmail = (cfg.adminEmail||"").trim().toLowerCase()
-  const adminPasswordHash = (cfg.adminPasswordHash||"").trim().toLowerCase()
-  if (!adminEmail || !adminPasswordHash){ adminLoginMsg.textContent = "Admin credentials are not configured."; return }
-  const okEmail = e.toLowerCase() === adminEmail
+  const adminEmail = normalize(cfg.adminEmail||"")
+  const adminName = normalize(cfg.adminName||"")
+  const adminPasswordHash = normalize(cfg.adminPasswordHash||"")
+  if ((!adminEmail && !adminName) || !adminPasswordHash){ adminLoginMsg.textContent = "Admin credentials are not configured."; return }
+  const idNorm = normalize(e)
+  const okId = (adminEmail && idNorm===adminEmail) || (adminName && idNorm===adminName)
   const ph = await hashPassword(p)
-  const okPass = ph.toLowerCase() === adminPasswordHash
-  if (!okEmail || !okPass){
-    setErr(adminEmailInput, adminEmailErr, okEmail? "" : "Incorrect admin email.")
+  const okPass = normalize(ph) === adminPasswordHash
+  if (!okId || !okPass){
+    setErr(adminEmailInput, adminEmailErr, okId? "" : "Incorrect admin email or name.")
     setErr(adminPassInput, adminPassErr, okPass? "" : "Incorrect admin password.")
     adminLoginMsg.textContent = "Authorization failed."
     return
   }
-  CodeLensAuth.setUser({ provider:"admin", role:"admin", email:e, name:"Admin", createdAt: Date.now() })
+  CodeLensAuth.setUser({ provider:"admin", role:"admin", email: validEmail(e)?e:"", name: cfg.adminName||"Admin", createdAt: Date.now() })
   CodeLensAuth.addAudit("admin_login", { email:e })
   window.location.href = "admin.html"
 })

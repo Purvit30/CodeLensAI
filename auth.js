@@ -40,9 +40,11 @@ function setUserRole(email, role){
 function isAdmin(u){
   const cfg = window.CodeLensConfig || {}
   const adminEmail = (cfg.adminEmail||"").toLowerCase()
+  const adminName = (cfg.adminName||"").toLowerCase()
   if (!u) return false
   if ((u.role||"")==="admin") return true
   if (adminEmail && (u.email||"").toLowerCase()===adminEmail) return true
+  if (adminName && (u.name||"").toLowerCase()===adminName) return true
   return false
 }
 function requireAdmin(){
