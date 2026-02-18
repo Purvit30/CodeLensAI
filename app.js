@@ -22,6 +22,51 @@ const terminalToggle = document.getElementById("terminal-toggle")
 const tabsEl = document.getElementById("tabs")
 let terminalCollapsed = false
 
+function getApiSettings(){
+  const cfg = window.CodeLensConfig || {}
+  const base = String(cfg.apiBaseUrl || "").trim()
+  const path = String(cfg.apiAnalyzePath || "/api/analyze").trim() || "/api/analyze"
+  const token = String(cfg.apiToken || "").trim()
+  const timeoutMs = Number(cfg.apiTimeoutMs || 10000)
+  if (!base) return null
+  return {
+    endpoint: base.replace(/\/$/,"") + (path.startsWith("/") ? path : "/"+path),
+    token,
+    timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 10000
+  }
+}
+
+async function requestAnalysisFromApi(payload){
+  const api = getApiSettings()
+  if (!api) return { data: null, attempted: false }
+
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null
+  const timer = controller ? setTimeout(()=> controller.abort(), api.timeoutMs) : null
+  const headers = { "Content-Type": "application/json" }
+  if (api.token) headers.Authorization = `Bearer ${api.token}`
+
+  try {
+    const res = await fetch(api.endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      signal: controller ? controller.signal : undefined
+    })
+    const bodyText = await res.text().catch(()=>"")
+    let body = null
+    try { body = bodyText ? JSON.parse(bodyText) : null } catch { body = bodyText }
+
+    if (!res.ok) {
+      const msg = body && typeof body === "object" && body.error ? String(body.error) : String(body || "")
+      throw new Error(msg || `API request failed (${res.status})`)
+    }
+
+    return { data: body, attempted: true }
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
 function detectLanguage(code, override) {
   if (override) return override
   const c = code
@@ -239,18 +284,27 @@ function appendRuntime(kind, msg){
   updateRuntimeView()
 }
 
-function showErrors(){
+async function showErrors(){
   const code = input.value
   const override = langSelect.value||""
   const lang = detectLanguage(code, override)
-  const result = errorsAndImprovements(code, lang)
-  const issues = result.issues.length ? result.issues : ["No obvious issues detected."]
+  const localResult = errorsAndImprovements(code, lang)
+  let issues = localResult.issues.length ? localResult.issues : ["No obvious issues detected."]
+  try {
+    const apiResponse = await requestAnalysisFromApi({ action: "errors", code, language: lang })
+    const apiResult = apiResponse.data
+    if (apiResult && Array.isArray(apiResult.errors) && apiResult.errors.length) {
+      issues = apiResult.errors.map(x=>String(x))
+    }
+  } catch (err) {
+    if (getApiSettings()) appendRuntime("logs", "API unavailable, using local error analysis.")
+  }
   runtimeData.errors = issues
   runtimeActiveTab = "errors"
   updateRuntimeView()
 }
 
-function runExplain(showFlowOnly, optimizeOnly) {
+async function runExplain(showFlowOnly, optimizeOnly) {
   const code = input.value
   const override = langSelect.value||""
   const lang = detectLanguage(code, override)
@@ -267,23 +321,48 @@ function runExplain(showFlowOnly, optimizeOnly) {
   const comp = complexity(code, entities)
   const improvements = errorsAndImprovements(code, lang)
   const flow = visualFlow(entities)
-  if (showFlowOnly) {
-    output.textContent = "VISUAL FLOW:\n"+flow
+
+  try {
+    const apiResponse = await requestAnalysisFromApi({
+      action: showFlowOnly ? "flow" : optimizeOnly ? "optimize" : "explain",
+      code,
+      language: lang,
+      advanced: modeAdvanced.checked,
+      eli10: modeEli10.checked
+    })
+    const apiResult = apiResponse.data
+    if (apiResult) {
+      if (showFlowOnly && apiResult.flow) {
+        output.textContent = "VISUAL FLOW:\n"+String(apiResult.flow)
+        return
+      }
+      if (optimizeOnly && Array.isArray(apiResult.tips)) {
+        output.textContent = "OPTIMIZE CODE SUGGESTIONS:\n"+apiResult.tips.join("\n")
+        return
+      }
+      if (!showFlowOnly && !optimizeOnly && typeof apiResult.text === "string" && apiResult.text.trim()) {
+        output.textContent = apiResult.text
+        return
+      }
+    }
+  } catch (err) {
+    if (getApiSettings()) appendRuntime("logs", "API unavailable, using built-in analysis.")
+  } finally {
     btnExplain.classList.remove("btn-loading")
     btnExplain.innerHTML = 'Explain Code'
+  }
+
+  if (showFlowOnly) {
+    output.textContent = "VISUAL FLOW:\n"+flow
     return
   }
   if (optimizeOnly) {
-    const tips = improvements.tips.join("\n")
-    output.textContent = "OPTIMIZE CODE SUGGESTIONS:\n"+tips
-    btnExplain.classList.remove("btn-loading")
-    btnExplain.innerHTML = 'Explain Code'
+    output.textContent = "OPTIMIZE CODE SUGGESTIONS:\n"+improvements.tips.join("\n")
     return
   }
+
   const text = formatOutput(lang, summaryText, step, concepts, improvements, comp, flow, modeEli10.checked, modeAdvanced.checked, entities)
   output.textContent = text
-  btnExplain.classList.remove("btn-loading")
-  btnExplain.innerHTML = 'Explain Code'
 }
 
 btnExplain && btnExplain.addEventListener("click", ()=> runExplain(false,false))
