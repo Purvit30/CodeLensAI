@@ -149,6 +149,43 @@ function visualFlow(entities) {
   return items.map((x,i)=> i===items.length-1 ? x : x+" → ").join("")
 }
 
+async function openaiRequest(prompt) {
+  const key = (window.CodeLensConfig && window.CodeLensConfig.openaiApiKey) || window.OPENAI_API_KEY || ""
+  if (!key) throw new Error("OpenAI API key not configured.")
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + key
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful assistant that explains code and creates simple flowcharts." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 1000,
+      temperature: 0.2
+    })
+  })
+  if (!resp.ok) {
+    const txt = await resp.text()
+    throw new Error("OpenAI error: " + txt)
+  }
+  const j = await resp.json()
+  return (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || ""
+}
+
+async function openaiExplain(code, lang, opts={eli10:false, advanced:false}){
+  const prompt = `Explain the following ${lang} code. Provide the response in clearly labeled sections: SUMMARY, STEP-BY-STEP, KEY CONCEPTS, OPTIMIZATIONS, TIME COMPLEXITY, VISUAL FLOW. If ${opts.eli10} is true include a BEGINNER section. Use concise bullet points and numbered steps where appropriate.\n\nCode:\n\n${code}`
+  return await openaiRequest(prompt)
+}
+
+async function openaiFlow(code, lang){
+  const prompt = `Produce a concise linear flow description for the following ${lang} code suitable for rendering as a flowchart. Use plain text arrows like: Start -> Do X -> Check Y -> End.\n\nCode:\n\n${code}`
+  return await openaiRequest(prompt)
+}
+
 function exampleIO(lang) {
   if (lang==="Python") return {input:"[1,2,3]", output:"Processed list of 3 items"}
   if (lang==="JavaScript") return {input:"[1,2,3]", output:"Array processed"}
@@ -250,7 +287,7 @@ function showErrors(){
   updateRuntimeView()
 }
 
-function runExplain(showFlowOnly, optimizeOnly) {
+async function runExplain(showFlowOnly, optimizeOnly) {
   const code = input.value
   const override = langSelect.value||""
   const lang = detectLanguage(code, override)
@@ -267,6 +304,38 @@ function runExplain(showFlowOnly, optimizeOnly) {
   const comp = complexity(code, entities)
   const improvements = errorsAndImprovements(code, lang)
   const flow = visualFlow(entities)
+  // If OpenAI key present, request explanation/flow from the API; otherwise use local heuristics
+  const hasKey = !!((window.CodeLensConfig && window.CodeLensConfig.openaiApiKey) || window.OPENAI_API_KEY)
+  try {
+    if (hasKey) {
+      if (showFlowOnly) {
+        const aiFlow = await openaiFlow(code, lang)
+        output.textContent = "VISUAL FLOW:\n" + aiFlow
+        btnExplain.classList.remove("btn-loading")
+        btnExplain.innerHTML = 'Explain Code'
+        return
+      }
+      if (optimizeOnly) {
+        const ai = await openaiExplain(code, lang, { eli10: modeEli10.checked, advanced: modeAdvanced.checked })
+        // Try to extract an OPTIMIZATIONS section; otherwise show full AI output
+        const m = ai.match(/OPTIMIZATIONS:\s*([\s\S]*)/i)
+        const tips = m ? m[1].trim() : ai
+        output.textContent = "OPTIMIZE CODE SUGGESTIONS:\n" + tips
+        btnExplain.classList.remove("btn-loading")
+        btnExplain.innerHTML = 'Explain Code'
+        return
+      }
+      const ai = await openaiExplain(code, lang, { eli10: modeEli10.checked, advanced: modeAdvanced.checked })
+      output.textContent = ai
+      btnExplain.classList.remove("btn-loading")
+      btnExplain.innerHTML = 'Explain Code'
+      return
+    }
+  } catch(err){
+    // If OpenAI call fails, fall back to local explanation and show a note
+    appendRuntime("errors", "OpenAI request failed: " + String(err.message || err))
+  }
+
   if (showFlowOnly) {
     output.textContent = "VISUAL FLOW:\n"+flow
     btnExplain.classList.remove("btn-loading")
@@ -286,7 +355,7 @@ function runExplain(showFlowOnly, optimizeOnly) {
   btnExplain.innerHTML = 'Explain Code'
 }
 
-btnExplain && btnExplain.addEventListener("click", ()=> runExplain(false,false))
+btnExplain && btnExplain.addEventListener("click", ()=> { runExplain(false,false).catch(e=> appendRuntime('errors', String(e))) })
 btnErrors && btnErrors.addEventListener("click", showErrors)
 btnFlow && btnFlow.addEventListener("click", ()=> runExplain(true,false))
 btnOptimize && btnOptimize.addEventListener("click", ()=> runExplain(false,true))
