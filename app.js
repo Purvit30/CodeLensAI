@@ -304,10 +304,25 @@ async function runExplain(showFlowOnly, optimizeOnly) {
   const comp = complexity(code, entities)
   const improvements = errorsAndImprovements(code, lang)
   const flow = visualFlow(entities)
-  // If OpenAI key present, request explanation/flow from the API; otherwise use local heuristics
+
+  // Determine explanation source based on UI selector and available key
+  const explainSource = (document.getElementById("explain-source") && document.getElementById("explain-source").value) || "auto"
   const hasKey = !!((window.CodeLensConfig && window.CodeLensConfig.openaiApiKey) || window.OPENAI_API_KEY)
+  let useAI = false
+  if (explainSource === "openai") {
+    if (hasKey) useAI = true
+    else {
+      appendRuntime("errors", "OpenAI selected but no API key found; falling back to local explanation.")
+      useAI = false
+    }
+  } else if (explainSource === "local") {
+    useAI = false
+  } else { // auto
+    useAI = hasKey
+  }
+
   try {
-    if (hasKey) {
+    if (useAI) {
       if (showFlowOnly) {
         const aiFlow = await openaiFlow(code, lang)
         output.textContent = "VISUAL FLOW:\n" + aiFlow
@@ -317,7 +332,6 @@ async function runExplain(showFlowOnly, optimizeOnly) {
       }
       if (optimizeOnly) {
         const ai = await openaiExplain(code, lang, { eli10: modeEli10.checked, advanced: modeAdvanced.checked })
-        // Try to extract an OPTIMIZATIONS section; otherwise show full AI output
         const m = ai.match(/OPTIMIZATIONS:\s*([\s\S]*)/i)
         const tips = m ? m[1].trim() : ai
         output.textContent = "OPTIMIZE CODE SUGGESTIONS:\n" + tips
@@ -332,7 +346,6 @@ async function runExplain(showFlowOnly, optimizeOnly) {
       return
     }
   } catch(err){
-    // If OpenAI call fails, fall back to local explanation and show a note
     appendRuntime("errors", "OpenAI request failed: " + String(err.message || err))
   }
 
