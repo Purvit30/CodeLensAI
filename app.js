@@ -371,7 +371,7 @@ async function runExplain(showFlowOnly, optimizeOnly) {
 btnExplain && btnExplain.addEventListener("click", ()=> { runExplain(false,false).catch(e=> appendRuntime('errors', String(e))) })
 btnErrors && btnErrors.addEventListener("click", showErrors)
 btnFlow && btnFlow.addEventListener("click", ()=> runExplain(true,false))
-btnOptimize && btnOptimize.addEventListener("click", ()=> runExplain(false,true))
+btnOptimize && btnOptimize.addEventListener("click", ()=> { runExplain(false,true).catch(e=> appendRuntime('errors', String(e))) })
 btnClear && btnClear.addEventListener("click", ()=> { input.value=""; output.textContent="" })
 btnRun && btnRun.addEventListener("click", runCode)
 
