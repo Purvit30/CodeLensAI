@@ -20,7 +20,7 @@ Code can feel intimidating when you are just starting out. CodeLens AI is design
 - **Flow view** — turns the detected structure into a simple text flow.
 - **Basic suggestions** — highlights common improvement opportunities and provides a rough complexity estimate.
 - **AI-assisted explanations** — can use an OpenAI API for richer explanations when configured.
-- **In-browser runners** — runs JavaScript, TypeScript, Python, and Ruby in the browser.
+- **Browser-side execution logic** — includes execution support for JavaScript, TypeScript, Python, and Ruby.
 - **User workspace** — supports sign-up, sign-in, guest access, logout, and issue reporting.
 - **Admin prototype** — allows a prototype admin to view users, reports, and audit information.
 
@@ -44,9 +44,9 @@ Code can feel intimidating when you are just starting out. CodeLens AI is design
 2. The app looks for familiar code patterns, such as functions, variables, loops, and conditions.
 3. It creates a local explanation, key concepts, suggestions, a rough complexity estimate, and a text flow.
 4. When an API key is configured, the user can receive an AI-generated explanation instead.
-5. Supported languages can also be run directly in the browser.
+5. The project also includes browser-side execution support for selected languages.
 
-## Supported Execution
+## Browser-side Execution Support
 
 | Language | Runs in the browser? |
 | --- | --- |
