@@ -4,8 +4,8 @@
 
 [Live Demo](https://code-lens-ai-seven.vercel.app/login.html) · [Report a Bug](../../issues) · [Request a Feature](../../issues)
 
-<!-- SCREENSHOT PLACEHOLDER 1 — add: assets/screenshots/codelens-login.png -->
-<!-- Suggested capture: The sign-in / create-account screen. -->
+<img width="3164" height="1890" alt="image" src="https://github.com/user-attachments/assets/023f2dbe-49c2-48a9-86b1-fafdede53077" />
+
 
 ## Why CodeLens AI?
 
@@ -24,8 +24,8 @@ Code can feel intimidating when you are just starting out. CodeLens AI is design
 - **User workspace** — supports sign-up, sign-in, guest access, logout, and issue reporting.
 - **Admin prototype** — allows a prototype admin to view users, reports, and audit information.
 
-<!-- SCREENSHOT PLACEHOLDER 2 — add: assets/screenshots/codelens-analysis.png -->
-<!-- Suggested capture: Code editor with an explanation and flow result. -->
+<img width="3164" height="1890" alt="image" src="https://github.com/user-attachments/assets/bb688bf2-98f6-4bc6-9c45-947c16c0243c" />
+
 
 ## Built With
 
@@ -93,9 +93,6 @@ CodeLens AI is a learning prototype. Its user data is stored in the browser and 
 - Add tests for detection and analysis behaviour
 - Add more code runners safely through server-side sandboxing
 - Make explanations more customizable and accessible
-
-<!-- SCREENSHOT PLACEHOLDER 3 — add: assets/screenshots/codelens-admin.png -->
-<!-- Suggested capture: Admin dashboard or runtime output panel. -->
 
 ## Author
 
